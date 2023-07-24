@@ -73,15 +73,51 @@ def delete_project():
 # finds the project id using project name
 def find_id(project_name):
     dict = get_projects()
+    found = False
     for project in dict:
         if(project['name'] == project_name):
+            found = True
             return project['project_id']
+    if(found ==  False):
+        print("Could not find the project. Try again.")
+        return None
+
+# changes the project name
+def change_project_name():
+    old_project_name = input("Enter the name of the project you want to change: ")
+    new_project_name = input("Enter a new name for your project: ")
+    header = { "Content-Type": "application/json" }
+    data = { "name": new_project_name }
+    project_id = find_id(old_project_name)
+
+    response = requests.put(f"{GNS3_SERVER}/v2/projects/{project_id}", json= data, headers= header, auth= (USERNAME, PASSWORD))
+
+    if(response.status_code == 200 or response.status_code == 204):
+        print("Project name changed successfully.")
+        return response.status_code
+    else:
+        print("Failed to change the project name.")
+        return None
 
 # main
-
-#list_project_names()
-#see_projects(get_projects())
-#create_project_user_input()
-#see_projects(get_projects())
-#delete_project()
-list_project_names()
+while(True):
+    print("Enter 0 to exit")
+    print("Enter 1 to see all projects with their specifications")
+    print("Enter 2 to see all project names")
+    print("Enter 3 to create a new project")
+    print("Enter 4 to delete an existing project")
+    print("Enter 5 to change an existing project name")
+    op = input("Enter an instruction: ")
+    match op:
+        case "0":
+            exit(0)
+        case "1":
+            see_projects(get_projects())
+        case "2":
+            list_project_names()
+        case "3":
+            create_project_user_input()
+        case "4":
+            delete_project()
+        case "5":
+            change_project_name()
