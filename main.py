@@ -9,21 +9,42 @@ def print_list(lst):
     for i in range(len(lst)):
         print(lst[i] + " ")
 
-# all projects in formatted style
-def see_projects(projects_list):
-    for project in projects_list:
-        print(project['name'].upper())
-        for key, value in project.items():
-            print(f"{key}: {value}")
-        print("-----------")
+# finds the project id using project name
+def find_id(project_name):
+    dict = get_projects()
+    found = False
+    for project in dict:
+        if(project['name'] == project_name):
+            found = True
+            return project['project_id']
+    if(found ==  False):
+        print("Could not find the project. Try again.")
+        return None
 
 # gets projects on GNS3 server and their settings
-
 def get_projects():
     response = requests.get(f"{GNS3_SERVER}/v2/projects", auth= (USERNAME, PASSWORD))
     if response.status_code == 200:
         return response.json()
     return None
+
+# gets hosts of a particular project on GNS3 server and their settings
+def get_hosts():
+    my_project = input("Enter your project name: ")
+    project_id = find_id(my_project)
+    header = {"Content-Type": "application/json"}
+    response = requests.get(f"{GNS3_SERVER}/v2/projects/{project_id}/nodes", headers=header, auth=(USERNAME, PASSWORD))
+
+    if (response.status_code == 200):
+        return response.json()
+
+# all info in formatted style
+def see_info(info_list):
+    for info in info_list:
+        print(info['name'].upper())
+        for key, value in info.items():
+            print(f"{key}: {value}")
+        print("-----------")
 
 # gets only the names of existing projects
 def list_project_names():
@@ -37,8 +58,7 @@ def list_project_names():
     else:
         print("Error found.")
 
-
-# creating a new project
+# creates a new project
 def create_project(project_name):
     header = { "Content-Type" : "application/json" }
     data = { "name": project_name }
@@ -51,14 +71,13 @@ def create_project(project_name):
         print("Failed to create a new project.")
         return None
 
-# creating a new project and listing it with user input
+# creates a new project and lists it with user input
 def create_project_user_input():
     new_project_name = input("Enter a name for your new project: ")
     create_project(new_project_name)
     list_project_names()
 
-#delete a project
-
+#deletes a project
 def delete_project():
     project_name = input("Enter a project you want to delete: ")
     project_id = find_id(project_name)
@@ -68,18 +87,6 @@ def delete_project():
         return response.status_code
     else:
         print("Failed to delete the project.")
-        return None
-
-# finds the project id using project name
-def find_id(project_name):
-    dict = get_projects()
-    found = False
-    for project in dict:
-        if(project['name'] == project_name):
-            found = True
-            return project['project_id']
-    if(found ==  False):
-        print("Could not find the project. Try again.")
         return None
 
 # changes the project name
@@ -99,6 +106,35 @@ def change_project_name():
         print("Failed to change the project name.")
         return None
 
+# prints host names
+def print_hostnames():
+    my_project = input("Enter your project name: ")
+    project_id = find_id(my_project)
+    header = { "Content-Type": "application/json"}
+    response = requests.get(f"{GNS3_SERVER}/v2/projects/{project_id}/nodes", headers= header,auth=(USERNAME, PASSWORD))
+
+    if(response.status_code == 200):
+        response = response.json()
+        for host in response:
+            print(host['name'])
+
+# gets all interfaces
+def get_all_interfaces():
+    my_project = input("Enter your project name: ")
+    router_hostname = input("Enter your router: ")
+
+    project_id = find_id(my_project)
+    header = {"Content-Type": "application/json"}
+
+    response = requests.get(f"{GNS3_SERVER}/v2/projects/{project_id}/nodes", headers=header, auth=(USERNAME, PASSWORD))
+
+    if(response.status_code == 200):
+        response = response.json()
+        for host in response:
+            if(host['name'] == router_hostname):
+                for key in host['ports']:
+                    print(key['name'])
+
 # main
 while(True):
     print("Enter 0 to exit")
@@ -107,12 +143,15 @@ while(True):
     print("Enter 3 to create a new project")
     print("Enter 4 to delete an existing project")
     print("Enter 5 to change an existing project name")
+    print("Enter 6 to print all host names in a particular project")
+    print("Enter 7 to see all hosts with their specifications")
+    print("Enter 8 to see all interfaces on a specific device")
     op = input("Enter an instruction: ")
     match op:
         case "0":
             exit(0)
         case "1":
-            see_projects(get_projects())
+            see_info(get_projects())
         case "2":
             list_project_names()
         case "3":
@@ -121,3 +160,9 @@ while(True):
             delete_project()
         case "5":
             change_project_name()
+        case "6":
+            print_hostnames()
+        case "7":
+            see_info(get_hosts())
+        case "8":
+            get_all_interfaces()
