@@ -21,6 +21,17 @@ def find_id(project_name):
         print("Could not find the project. Try again.")
         return None
 
+def find_node_id(node_name):
+    dict = get_hosts()
+    found = False
+    for node in dict:
+        if(node['name'] == node_name):
+            found = True
+            return node['node_id']
+    if(found ==  False):
+        print("Could not find the node. Try again.")
+        return None
+
 # gets projects on GNS3 server and their settings
 def get_projects():
     response = requests.get(f"{GNS3_SERVER}/v2/projects", auth= (USERNAME, PASSWORD))
@@ -135,6 +146,44 @@ def get_all_interfaces():
                 for key in host['ports']:
                     print(key['name'])
 
+#def get_active_interfaces():
+#    my_project = input("Enter your project name: ")
+#    my_device = input("Enter your device name: ")
+#
+#    project_id = find_id(my_project)
+#    header = {"Content-Type": "application/json"}
+
+# starts all devices in topology
+def start_all_devices():
+    my_project = input("Enter your project name: ")
+    project_id = find_id(my_project)
+
+    nodes = get_hosts()
+
+    for node in nodes:
+        node_id = node['node_id']
+        response = requests.post(f"{GNS3_SERVER}/v2/projects/{project_id}/nodes/{node_id}/start", auth=(USERNAME, PASSWORD))
+
+        if(response.status_code == 200):
+            print("Device " + node['name'] + " started successfully.")
+        else:
+            print("Device " + node['name'] + " failed to start.")
+
+# stops all devices in topology
+def stop_all_devices():
+    my_project = input("Enter your project name: ")
+    project_id = find_id(my_project)
+
+    nodes = get_hosts()
+
+    for node in nodes:
+        node_id = node['node_id']
+        response = requests.post(f"{GNS3_SERVER}/v2/projects/{project_id}/nodes/{node_id}/stop", auth=(USERNAME, PASSWORD))
+
+        if (response.status_code == 200):
+            print("Device " + node['name'] + " stopped successfully.")
+        else:
+            print("Device " + node['name'] + " failed to stop.")
 # main
 while(True):
     print("Enter 0 to exit")
@@ -146,6 +195,8 @@ while(True):
     print("Enter 6 to print all host names in a particular project")
     print("Enter 7 to see all hosts with their specifications")
     print("Enter 8 to see all interfaces on a specific device")
+    print("Enter 9 to start the devices")
+    print("Enter 10 to stop the devices")
     op = input("Enter an instruction: ")
     match op:
         case "0":
@@ -166,3 +217,7 @@ while(True):
             see_info(get_hosts())
         case "8":
             get_all_interfaces()
+        case "9":
+            start_all_devices()
+        case "10":
+            stop_all_devices()
