@@ -1,4 +1,5 @@
 import requests
+from netmiko import ConnectHandler
 
 GNS3_SERVER = "http://127.0.0.1:3080"
 USERNAME = "admin"
@@ -27,6 +28,7 @@ def find_node_id(node_name):
     for node in dict:
         if(node['name'] == node_name):
             found = True
+            print(node['node_id'])
             return node['node_id']
     if(found ==  False):
         print("Could not find the node. Try again.")
@@ -120,10 +122,12 @@ def change_project_name():
 # prints host names
 def print_hostnames():
     my_project = input("Enter your project name: ")
+    print("uslo u f")
     project_id = find_id(my_project)
+    print("nije puklo u find id")
     header = { "Content-Type": "application/json"}
     response = requests.get(f"{GNS3_SERVER}/v2/projects/{project_id}/nodes", headers= header,auth=(USERNAME, PASSWORD))
-
+    print("nije puklo u response")
     if(response.status_code == 200):
         response = response.json()
         for host in response:
@@ -145,6 +149,30 @@ def get_all_interfaces():
             if(host['name'] == router_hostname):
                 for key in host['ports']:
                     print(key['name'])
+
+def get_router_config():
+    my_project = input("Enter your project name: ")
+    project_id = find_id(my_project)
+
+    my_node = input("Enter your node name: ")
+    nodes = get_hosts()
+
+    for node in nodes:
+        if(node['name'] == my_node):
+            print(node['name'])
+            cisco_router = {
+                "device_type": "cisco_ios",
+                "host": node['name'],
+                "username": "admin",
+                "password": "admin123"}
+
+            with ConnectHandler(**cisco_router) as net_connect:
+                result = net_connect.send_command('show hostname')
+                net_connect.disconnect()
+
+            print(result)
+
+
 
 #def get_active_interfaces():
 #    my_project = input("Enter your project name: ")
@@ -197,6 +225,7 @@ while(True):
     print("Enter 8 to see all interfaces on a specific device")
     print("Enter 9 to start the devices")
     print("Enter 10 to stop the devices")
+    print("Enter 11 to see router configuration")
     op = input("Enter an instruction: ")
     match op:
         case "0":
@@ -221,3 +250,5 @@ while(True):
             start_all_devices()
         case "10":
             stop_all_devices()
+        case "11":
+            get_router_config()
