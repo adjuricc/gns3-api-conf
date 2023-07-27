@@ -1,5 +1,6 @@
 import io
 import re
+import time
 
 import paramiko
 import requests
@@ -199,11 +200,10 @@ def string_to_dict(str):
             }
             list_dict.append(dict)
     see_info(list_dict)
+    return list_dict
 
 # gets active interfaces on my physical lab
 def get_active_interfaces():
-    up_interfaces = []
-
     cisco_router = {
         "device_type": DEVICE_TYPE,
         "host": HOST_NAME,
@@ -214,10 +214,29 @@ def get_active_interfaces():
 
     connection.enable()
     output = connection.send_command("show ip interface brief")
-    print(output)
-    print("---")
-    string_to_dict(output)
 
+    return string_to_dict(output)
+
+def set_ipaddress_interface():
+    my_int = input("Enter an interface you want to shutdown: ")
+    my_ip_address = input("Enter a IP address: ")
+    active_interfaces = get_active_interfaces()
+    for interface in active_interfaces:
+        if(my_int == interface['name']):
+            cisco_router = {
+                "device_type": DEVICE_TYPE,
+                "host": HOST_NAME,
+                "username": ROUTER_USER,
+                "password": ROUTER_PASSWORD
+            }
+
+            connection = ConnectHandler(**cisco_router)
+
+            connection.enable()
+            connection.send_config_set(['configure terminal', 'int g0/1', f'ip address {my_ip_address}'])
+            connection.save_config()
+
+            connection.disconnect()
 
 # starts all devices in topology
 def start_all_devices():
@@ -265,6 +284,7 @@ while(True):
     print("Enter 10 to stop the devices")
     print("Enter 11 to see router configuration")
     print("Enter 12 to see active interfaces")
+    print("Enter 13 to set a ip address on an interface")
     op = input("Enter an instruction: ")
     match op:
         case "0":
@@ -293,3 +313,5 @@ while(True):
             get_router_config()
         case "12":
             get_active_interfaces()
+        case "13":
+            set_ipaddress_interface()
