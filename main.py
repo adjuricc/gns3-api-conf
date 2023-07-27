@@ -1,9 +1,24 @@
+import io
+import re
+
+import paramiko
 import requests
 from netmiko import ConnectHandler
+import textfsm
 
 GNS3_SERVER = "http://127.0.0.1:3080"
 USERNAME = "admin"
 PASSWORD = "KtAtzrSofhocZUwkYF74aXdf5tRIanLfrCVSLLqAKbCfY9ATqSdXEoczKREHBb6W"
+
+DEVICE_TYPE = "cisco_ios"
+HOST_NAME = "10.199.199.11"
+ROUTER_USER = "asseco"
+ROUTER_PASSWORD = "123Asseco"
+
+DEVICE_TYPE_LAB = "cisco_xr"
+HOST_NAME_LAB = "LAB_SW"
+LAB_USER = "asseco"
+LAB_PASS = "123Asseco"
 
 # prints a list
 def print_list(lst):
@@ -150,36 +165,59 @@ def get_all_interfaces():
                 for key in host['ports']:
                     print(key['name'])
 
+# gets router config on my physical lab
 def get_router_config():
-    my_project = input("Enter your project name: ")
-    project_id = find_id(my_project)
+    config_output = None
+    connection = None
 
-    my_node = input("Enter your node name: ")
-    nodes = get_hosts()
+    cisco_router = {
+        "device_type": DEVICE_TYPE,
+        "host": HOST_NAME,
+        "username": ROUTER_USER,
+        "password": ROUTER_PASSWORD
+    }
+    connection = ConnectHandler(**cisco_router)
 
-    for node in nodes:
-        if(node['name'] == my_node):
-            print(node['name'])
-            cisco_router = {
-                "device_type": "cisco_ios",
-                "host": node['name'],
-                "username": "admin",
-                "password": "admin123"}
+    # Send the command to fetch the configuration
+    connection.enable()
+    config_output = connection.send_command("show running-config")
+    print(config_output)
+    return config_output
 
-            with ConnectHandler(**cisco_router) as net_connect:
-                result = net_connect.send_command('show hostname')
-                net_connect.disconnect()
+# converts a string in table format to a dictionary
+def string_to_dict(str):
+    list_dict = []
+    lines = str.split("\n")
+    word_pattern = r'\S+'
+    for i in range(1, len(lines)):
+        words = re.findall(word_pattern, lines[i])
+        if(words[4] == "up"):
+            dict = {
+                "name": words[0],
+                "IP-Address": words[1],
+                "Status": words[4]
+            }
+            list_dict.append(dict)
+    see_info(list_dict)
 
-            print(result)
+# gets active interfaces on my physical lab
+def get_active_interfaces():
+    up_interfaces = []
 
+    cisco_router = {
+        "device_type": DEVICE_TYPE,
+        "host": HOST_NAME,
+        "username": ROUTER_USER,
+        "password": ROUTER_PASSWORD
+    }
+    connection = ConnectHandler(**cisco_router)
 
+    connection.enable()
+    output = connection.send_command("show ip interface brief")
+    print(output)
+    print("---")
+    string_to_dict(output)
 
-#def get_active_interfaces():
-#    my_project = input("Enter your project name: ")
-#    my_device = input("Enter your device name: ")
-#
-#    project_id = find_id(my_project)
-#    header = {"Content-Type": "application/json"}
 
 # starts all devices in topology
 def start_all_devices():
@@ -226,6 +264,7 @@ while(True):
     print("Enter 9 to start the devices")
     print("Enter 10 to stop the devices")
     print("Enter 11 to see router configuration")
+    print("Enter 12 to see active interfaces")
     op = input("Enter an instruction: ")
     match op:
         case "0":
@@ -252,3 +291,5 @@ while(True):
             stop_all_devices()
         case "11":
             get_router_config()
+        case "12":
+            get_active_interfaces()
