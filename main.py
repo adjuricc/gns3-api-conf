@@ -7,19 +7,19 @@ import requests
 from netmiko import ConnectHandler
 import textfsm
 
-GNS3_SERVER = "http://127.0.0.1:3080"
-USERNAME = "admin"
-PASSWORD = "KtAtzrSofhocZUwkYF74aXdf5tRIanLfrCVSLLqAKbCfY9ATqSdXEoczKREHBb6W"
+GNS3_SERVER = ""
+USERNAME = ""
+PASSWORD = ""
 
-DEVICE_TYPE = "cisco_ios"
-HOST_NAME = "10.199.199.11"
-ROUTER_USER = "asseco"
-ROUTER_PASSWORD = "123Asseco"
+DEVICE_TYPE = ""
+HOST_NAME = ""
+ROUTER_USER = ""
+ROUTER_PASSWORD = ""
 
-DEVICE_TYPE_LAB = "cisco_xr"
-HOST_NAME_LAB = "LAB_SW"
-LAB_USER = "asseco"
-LAB_PASS = "123Asseco"
+DEVICE_TYPE_LAB = ""
+HOST_NAME_LAB = ""
+LAB_USER = ""
+LAB_PASS = ""
 
 # prints a list
 def print_list(lst):
